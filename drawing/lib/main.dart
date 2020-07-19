@@ -38,24 +38,25 @@ class MyPainter extends CustomPainter {
   var random = new Random();
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint() 
-      ..color = Colors.deepPurpleAccent 
-      ..strokeCap = StrokeCap.round 
-      ..strokeWidth = 4.0; 
+    Paint paint = Paint()
+      ..color = Colors.deepPurpleAccent
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4.0;
 //    List<Offset> _points = [];
-    Uint8List bytes = new Uint8List(size.width.toInt() * size.height.toInt() * 4);
-    for(int x = 0; x < size.width; x += 1)
-      for(int y = 0; y < size.height; y += 1)
-      {
-        int pos = x*4 + y*size.width.toInt()*4;
+    Uint8List bytes =
+        new Uint8List(size.width.toInt() * size.height.toInt() * 4);
+    for (int x = 0; x < size.width; x += 1)
+      for (int y = 0; y < size.height; y += 1) {
+        int pos = x * 4 + y * size.width.toInt() * 4;
         bytes[pos] = random.nextInt(256);
-        bytes[pos+1] = random.nextInt(256);
-        bytes[pos+2] = random.nextInt(256);
+        bytes[pos + 1] = random.nextInt(256);
+        bytes[pos + 2] = random.nextInt(256);
       }
 //    canvas.drawPoints(ui.PointMode.points, _points, paint);
 //    canvas.drawImage(ui.Image.fromBytes(size.width, size.height, bytes, format: Format.rgba), Offset(0,0), paint);
-      canvas.drawImage(Image.memory(bytes, width: size.width, height: size.height), Offset(0,0), paint);
+//      canvas.drawImage(Image.memory(bytes, width: size.width, height: size.height), Offset(0,0), paint);
   }
+
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
     return false;
@@ -82,8 +83,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
+  var random = new Random();
+  Uint8List bytes = new Uint8List(100 * 100 * 4);
+  _MyHomePageState() {
+    for (int x = 0; x < 100; x += 1)
+      for (int y = 0; y < 100; y += 1) {
+        int pos = (x + y * 100) * 4;
+        bytes[pos] = random.nextInt(256);
+        bytes[pos + 1] = random.nextInt(256);
+        bytes[pos + 2] = random.nextInt(256);
+      }
+  }
   void _incrementCounter() {
+    for (int x = 0; x < 100; x += 1)
+      for (int y = 0; y < 100; y += 1) {
+        int pos = (x + y * 100) * 4;
+        bytes[pos] = random.nextInt(256);
+        bytes[pos + 1] = random.nextInt(256);
+        bytes[pos + 2] = random.nextInt(256);
+      }
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -129,9 +147,10 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             CustomPaint(
-              size: Size(200, 200), // 위젯의 크기를 정함. 
+              size: Size(200, 200), // 위젯의 크기를 정함.
               painter: MyPainter(), // painter에 그리기를 담당할 클래스를 넣음.
             ),
+            Image.memory(bytes, width: 100, height: 100, format: Format.rgba),
           ],
         ),
       ),
