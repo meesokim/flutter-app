@@ -1,164 +1,182 @@
-import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'spc/sscreen.dart';
 
-void main() {
-  runApp(MyApp());
-}
+//import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
+void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+    return new MaterialApp(
+      title: 'SPC-1000',
+      home: new MyHomePage(),
     );
-  }
-}
-
-class MyPainter extends CustomPainter {
-  var random = new Random();
-  @override
-  void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
-      ..color = Colors.deepPurpleAccent
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 4.0;
-//    List<Offset> _points = [];
-    Uint8List bytes =
-        new Uint8List(size.width.toInt() * size.height.toInt() * 4);
-    for (int x = 0; x < size.width; x += 1)
-      for (int y = 0; y < size.height; y += 1) {
-        int pos = x * 4 + y * size.width.toInt() * 4;
-        bytes[pos] = random.nextInt(256);
-        bytes[pos + 1] = random.nextInt(256);
-        bytes[pos + 2] = random.nextInt(256);
-      }
-//    canvas.drawPoints(ui.PointMode.points, _points, paint);
-//    canvas.drawImage(ui.Image.fromBytes(size.width, size.height, bytes, format: Format.rgba), Offset(0,0), paint);
-//      canvas.drawImage(Image.memory(bytes, width: size.width, height: size.height), Offset(0,0), paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyHomePageState createState() => new _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  var random = new Random();
-  Uint8List bytes = new Uint8List(100 * 100 * 4);
-  _MyHomePageState() {
-    for (int x = 0; x < 100; x += 1)
-      for (int y = 0; y < 100; y += 1) {
-        int pos = (x + y * 100) * 4;
-        bytes[pos] = random.nextInt(256);
-        bytes[pos + 1] = random.nextInt(256);
-        bytes[pos + 2] = random.nextInt(256);
-      }
-  }
-  void _incrementCounter() {
-    for (int x = 0; x < 100; x += 1)
-      for (int y = 0; y < 100; y += 1) {
-        int pos = (x + y * 100) * 4;
-        bytes[pos] = random.nextInt(256);
-        bytes[pos + 1] = random.nextInt(256);
-        bytes[pos + 2] = random.nextInt(256);
-      }
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  Uint8List bmp;
+  Uint8List buffer;
+  int color;
+  BMP332Header header;
+  Random r = Random();
+  double scale = 0.5;
+  Timer _timer;
+  Key _key;
+  int _a = 0;
+  Screen screen;
+  @override
+  void initState() {
+    super.initState();
+    header = BMP332Header(256, 192);
+    color = r.nextInt(255);
+    buffer = Uint8List(header._width * header._height);
+    screen = new Screen(buffer);
+    scale = 0.5;
+    _timer = new Timer.periodic(
+        const Duration(milliseconds: 32),
+        (Timer timer) => setState(() {
+              color = r.nextInt(16);
+              {
+                for (int i = 0; i < header._height - 1; i++) {
+                  buffer.fillRange(i * header._width, (i + 1) * header._width,
+                      (i + color) % 16);
+                }
+                screen.dump();
+              }
+              scale = scale == 0.4 ? 0.41 : 0.4;
+              _a++;
+            }));
   }
 
+  // bool _isPlayerReady = false;
+  // PlayerState _playerState;
+  // YoutubeMetaData _videoMetaData;
+  // void listener() {
+  //   if (_isPlayerReady && mounted && !_controller.value.isFullScreen) {
+  //     setState(() {
+  //       _playerState = _controller.value.playerState;
+  //       _videoMetaData = _controller.metadata;
+  //     });
+  //   }
+  // }
+
+  // YoutubePlayerController _controller = YoutubePlayerController(
+  //   initialVideoId: 'iLnmTe5Q2Qw',
+  //   flags: YoutubePlayerFlags(
+  //     autoPlay: true,
+  //     mute: true,
+  //   ),
+  // );
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text('SPC-1000'),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: ListView(
           children: <Widget>[
-            CustomPaint(
-              size: Size(200, 200), // 위젯의 크기를 정함.
-              painter: MyPainter(), // painter에 그리기를 담당할 클래스를 넣음.
+            Image.memory(
+              header.appendBitmap(buffer),
+              scale: scale,
             ),
-            Image.memory(bytes, width: 100, height: 100, format: Format.rgba),
+            Text("$_a"),
+//            Text(buffer.toString()),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class BMP332Header {
+  BMP332Header(this._width, this._height) : assert(_width & 3 == 0) {
+    int baseHeaderSize = 54;
+    _totalHeaderSize = baseHeaderSize + 1024; // base + color map
+    int fileLength = _totalHeaderSize + _width * _height; // header + bitmap
+    _bmp = new Uint8List(fileLength);
+    ByteData bd = _bmp.buffer.asByteData();
+    bd.setUint8(0, 0x42);
+    bd.setUint8(1, 0x4d);
+    bd.setUint32(2, fileLength, Endian.little); // file length
+    bd.setUint32(10, _totalHeaderSize, Endian.little); // start of the bitmap
+    bd.setUint32(14, 40, Endian.little); // info header size
+    bd.setUint32(18, _width, Endian.little);
+    bd.setUint32(22, _height, Endian.little);
+    bd.setUint16(26, 1, Endian.little); // planes
+    bd.setUint32(28, 8, Endian.little); // bpp
+    bd.setUint32(30, 0, Endian.little); // compression
+    bd.setUint32(34, _width * _height, Endian.little); // bitmap size
+    var colors = [
+      /* BLACK */
+      0xff000000,
+      /* GREEN */
+      0xff07ff00,
+      /* YELLOW */
+      0xffffff00,
+      /* BLUE */
+      0xff3b08ff,
+      /* RED */
+      0xffcc003b,
+      /* BUFF */
+      0xffffffff,
+      /* CYAN */
+      0xff07e399,
+      /* MAGENTA */
+      0xffff1cff,
+      /* ORANGE */
+      0xffff8100,
+      /* GREEN */
+      0xff07ff00,
+      /* BUFF */
+      0xffffffff,
+      /* ALPHANUMERIC DARK GREEN */
+      0xff004400,
+      /* ALPHANUMERIC BRIGHT GREEN */
+      0xff07ff00,
+      /* ALPHANUMERIC DARK ORANGE */
+      0xff910000,
+      /* ALPHANUMERIC BRIGHT ORANGE */
+      0xffff8100
+    ];
+    // leave everything else as zero
+    // there are 256 possible variations of pixel
+    // build the indexed color map that maps from packed byte to RGBA32
+    // better still, create a lookup table see: http://unwind.se/bgr233/
+    for (int rgb = 0; rgb < 256; rgb++) {
+      int offset = baseHeaderSize + rgb * 4;
+
+      int red = rgb & 0xe0;
+      int green = rgb << 3 & 0xe0;
+      int blue = rgb & 6 & 0xc0;
+      bd.setUint8(offset + 3, 255); // A
+      bd.setUint8(offset + 2, red); // R
+      bd.setUint8(offset + 1, green); // G
+      bd.setUint8(offset, blue); // B
+      if (rgb < colors.length) bd.setUint32(offset, colors[rgb]);
+    }
+  }
+
+  Uint8List _bmp;
+  int _height;
+  int _totalHeaderSize;
+  int _width; // NOTE: width must be multiple of 4 as no account is made for bitmap padding
+
+  /// Insert the provided bitmap after the header and return the whole BMP
+  Uint8List appendBitmap(Uint8List bitmap) {
+    int size = _width * _height;
+    assert(bitmap.length == size);
+    _bmp.setRange(_totalHeaderSize, _totalHeaderSize + size, bitmap);
+    return _bmp;
   }
 }
